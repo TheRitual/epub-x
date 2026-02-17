@@ -62,7 +62,9 @@
   },
   "pkg": {
     "scripts": [
-      "dist/**/*.js"
+      "dist/cli.js",
+      "dist/lib.js",
+      "dist/assets/*.js"
     ],
     "assets": [
       "node_modules/**/*"
