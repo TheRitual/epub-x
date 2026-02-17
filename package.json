@@ -1,0 +1,31 @@
+{
+  "name": "epub-x",
+  "version": "0.0.0-development",
+  "type": "module",
+  "bin": {
+    "epub-x": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "release": "semantic-release"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^11.0.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^9.0.1",
+    "@semantic-release/release-notes-generator": "^12.0.0",
+    "@sebbo2002/semantic-release-jsr": "^1.0.0",
+    "@types/node": "^22.10.1",
+    "eslint": "^9.16.0",
+    "semantic-release": "^24.2.0",
+    "typescript": "^5.7.2",
+    "@eslint/js": "^9.16.0",
+    "typescript-eslint": "^8.16.0"
+  }
+}
