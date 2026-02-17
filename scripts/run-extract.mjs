@@ -34,7 +34,9 @@ async function main() {
   const argv = process.argv.slice(2);
   const { format, sourcePath, opts } = parseArgs(argv);
   if (!format || !["txt", "md", "html", "json"].includes(format)) {
-    console.error("Usage: run-extract.mjs <txt|md|html|json> <source-path> [--output-path=DIR] [--output-name=NAME] [--flat] [--include-images]");
+    console.error(
+      "Usage: run-extract.mjs <txt|md|html|json> <source-path> [--output-path=DIR] [--output-name=NAME] [--flat] [--include-images]"
+    );
     process.exit(1);
   }
   if (!sourcePath) {
@@ -43,10 +45,13 @@ async function main() {
   }
   const resolvedSource = path.resolve(process.cwd(), sourcePath);
   const defaultOutputPath = path.dirname(resolvedSource);
-  const defaultOutputName = path.basename(resolvedSource, path.extname(resolvedSource)) || "output";
+  const defaultOutputName =
+    path.basename(resolvedSource, path.extname(resolvedSource)) || "output";
   const input = {
     sourcePath: resolvedSource,
-    outputPath: opts.outputPath ? path.resolve(process.cwd(), opts.outputPath) : defaultOutputPath,
+    outputPath: opts.outputPath
+      ? path.resolve(process.cwd(), opts.outputPath)
+      : defaultOutputPath,
     outputName: opts.outputName ?? defaultOutputName,
     flatOutput: opts.flatOutput === true,
     includeImages: opts.includeImages === true,
