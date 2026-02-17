@@ -76,7 +76,9 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: find dist -name "*.js.map" -delete
-      - run: npx pkg . -t node20-macos-x64,node20-macos-arm64 -o ebook-x
+      - run: |
+          npx pkg . -t node20-macos-x64 -o ebook-x-macos-x64
+          npx pkg . -t node20-macos-arm64 -o ebook-x-macos-arm64
       - run: |
           version="${{ needs.resolve-tag.outputs.tag }}"
           version="${version#v}"
