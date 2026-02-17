@@ -30,7 +30,7 @@ describe("listEntries", () => {
   });
 
   it("includes directories and epub files only", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "epub-x-test-"));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ebook-x-test-"));
     try {
       fs.writeFileSync(path.join(dir, "a.epub"), "");
       fs.writeFileSync(path.join(dir, "b.txt"), "");

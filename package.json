@@ -1,9 +1,9 @@
 {
-  "name": "epub-x",
-  "version": "0.0.0-development",
+  "name": "@ritual/ebook-x",
+  "version": "1.0.0",
   "type": "module",
   "bin": {
-    "epub-x": "./dist/cli.js"
+    "ebook-x": "./dist/cli.js"
   },
   "scripts": {
     "build": "vite build --ssr",

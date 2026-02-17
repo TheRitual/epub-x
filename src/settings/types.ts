@@ -12,6 +12,7 @@ export type NewlinesHandling = "keep" | "one" | "two";
 export interface AppSettings {
   outputPath: string;
   defaultFormats: OutputFormat[];
+  cliThemeId: string;
   addChapterTitles: boolean;
   chapterTitleStyleTxt: ChapterTitleStyleTxt;
   emDashToHyphen: boolean;
@@ -44,6 +45,7 @@ export type { HtmlStyle };
 export const DEFAULT_SETTINGS: AppSettings = {
   outputPath: "",
   defaultFormats: ["txt"],
+  cliThemeId: "default",
   addChapterTitles: true,
   chapterTitleStyleTxt: "separated",
   emDashToHyphen: true,

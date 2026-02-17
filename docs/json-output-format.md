@@ -2,6 +2,8 @@
 
 This document describes the JSON output format produced when exporting an EPUB to JSON. It is intended as a stable, machine-readable standard for ebook content and metadata.
 
+A **JSON Schema** for this format is available: [epub-export-json-schema.json](epub-export-json-schema.json) (draft 2020-12). Use it to validate export output or generate types.
+
 ## Top-level structure
 
 ```ts
@@ -10,7 +12,7 @@ interface EpubExportJson {
   metadata: EpubExportMetadata;
   toc: EpubExportTocEntry[];
   chapters: EpubExportChapter[];
-  images: Record<string, EpubExportImage>;
+  images?: Record<string, EpubExportImage>;
 }
 ```
 
@@ -18,7 +20,7 @@ interface EpubExportJson {
 - **metadata**: Book metadata from the EPUB (title, author, language, etc.).
 - **toc**: Table of contents entries, each with an id and a reference to a chapter.
 - **chapters**: Ordered array of chapters, each with a prefixed id and content.
-- **images**: When image extraction is enabled, object mapping image id (e.g. `img_<uuid>`) to image data (mimeType and base64 data).
+- **images**: Present only when image extraction is enabled and there are images. Maps image id (e.g. `img_<uuid>`) to an object with **url** (path to the image file, e.g. `__IMG__/filename.png`). Image files are written to disk under the `__IMG__/` directory alongside the main JSON.
 
 ## Metadata
 
@@ -81,17 +83,17 @@ interface EpubExportChapter {
 
 ## Images
 
-When the “Include images” option is enabled for JSON output:
+When the “Include images” option is enabled for JSON output, image files are written to disk under the `__IMG__/` directory (same layout as MD/HTML export). The main JSON file contains an index of image ids to file paths:
 
 ```ts
 interface EpubExportImage {
-  mimeType: string;
-  data: string;
+  url: string;
 }
 ```
 
-- **images**: Top-level object. Keys are image ids (prefix `img_` + UUID). Values have **mimeType** (e.g. `"image/png"`) and **data** (base64-encoded image bytes).
-- In chapter **content**, an image is represented by the placeholder `{{img_<uuid>}}`. Replace each with the corresponding entry in **images** (e.g. render as inline image using the base64 data).
+- **images**: Optional top-level object. Keys are image ids (prefix `img_` + UUID). Values have **url** (path to the image file relative to the book directory, e.g. `__IMG__/item_cover.png`).
+- In chapter **content**, an image is represented by the placeholder `{{img_<uuid>}}`. Resolve each with **images[id].url** to get the image file path.
+- When image extraction is disabled, the main JSON has no **images** field and chapter content has no `{{img_<uuid>}}` placeholders.
 
 ## ID prefixes
 

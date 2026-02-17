@@ -3,9 +3,19 @@ import { DEFAULT_SETTINGS, formatHtmlStyleLabel } from "./types.js";
 import { promptSelectDirectory } from "../file-explorer/directory-picker.js";
 import { promptSettingsList } from "./settings-list-prompt.js";
 import { promptOutputFormatsMulti } from "../menus/format-multi-select.js";
+import { promptThemeMenu } from "./theme-menu.js";
 import { clearScreen } from "../menus/utils.js";
 import path from "node:path";
 import process from "node:process";
+import {
+  resolveTheme,
+  setCurrentTheme,
+  getDefaultTheme,
+  DEFAULT_THEMES,
+  isBuiltInThemeId,
+  loadCustomTheme,
+} from "../themes/index.js";
+import type { BuiltInThemeId } from "../themes/types.js";
 
 function defaultFormatsLabel(formats: AppSettings["defaultFormats"]): string {
   if (formats.length === 0) return "(none)";
@@ -15,6 +25,7 @@ function defaultFormatsLabel(formats: AppSettings["defaultFormats"]): string {
 export type SettingKey =
   | "outputPath"
   | "defaultFormats"
+  | "theme"
   | "splitChapters"
   | "chapterFileNameStyle"
   | "chapterFileNameCustomPrefix"
@@ -35,10 +46,20 @@ function formatOutputPath(s: AppSettings): string {
   return s.outputPath;
 }
 
+function getThemeLabel(settings: AppSettings): string {
+  const id = settings.cliThemeId;
+  if (isBuiltInThemeId(id)) {
+    return DEFAULT_THEMES[id as BuiltInThemeId].name;
+  }
+  const custom = loadCustomTheme(id);
+  return custom?.name ?? id;
+}
+
 function formatLabel(s: AppSettings): Record<SettingKey, string> {
   return {
     outputPath: `Output path: ${formatOutputPath(s)}`,
     defaultFormats: `Default formats: ${defaultFormatsLabel(s.defaultFormats)}`,
+    theme: `Theme: ${getThemeLabel(s)}`,
     splitChapters: `Split chapters: ${s.splitChapters ? "Yes" : "No"}`,
     chapterFileNameStyle: `Chapter name: ${s.chapterFileNameStyle === "same" ? "Same as output" : s.chapterFileNameStyle === "chapter" ? "Chapter" : "Custom"}`,
     chapterFileNameCustomPrefix: `Chapter prefix: ${s.chapterFileNameCustomPrefix || "(none)"}`,
@@ -105,7 +126,7 @@ export function getSettingDescription(
         : "Off: TOC is not specially preserved.";
     case "includeImages":
       return settings.includeImages
-        ? "On: images are extracted and inlined (MD/HTML) or embedded as base64 with {{img_id}} placeholders (JSON)."
+        ? "On: images are extracted to files (MD/HTML/JSON). JSON main file has an image index (id → url) and {{img_id}} placeholders in content."
         : "Off: images are skipped in extraction.";
     case "mdTocForChapters":
       return settings.mdTocForChapters
@@ -125,8 +146,12 @@ export function getSettingDescription(
         : settings.htmlStyle === "styled"
           ? "Styled: default CSS with sans-serif fonts and centered images. Good readability without customizing."
           : "Custom: use your saved theme (colors and fonts) for HTML output.";
+    case "theme":
+      return "CLI appearance: colors and frame style for menus and lists. Choose a built-in theme or create and edit custom themes.";
     case "__done__":
       return "Save current settings and return to the main menu.";
+    case "__sep_app__":
+      return "Appearance of the app: CLI theme (colors and frame style).";
     case "__sep__":
       return "General options: output folder, default formats, chapter splitting, and text cleanup.";
     case "__sep2__":
@@ -147,6 +172,8 @@ export function buildChoices(
 ): { name: string; value: string; disabled?: boolean }[] {
   const labels = formatLabel(settings);
   return [
+    { name: "——— App Settings ———", value: "__sep_app__", disabled: true },
+    { name: labels.theme, value: "theme" },
     { name: "——— General ———", value: "__sep__", disabled: true },
     { name: labels.outputPath, value: "outputPath" },
     { name: labels.defaultFormats, value: "defaultFormats" },
@@ -204,6 +231,7 @@ export async function promptSettingsMenu(
     if (action.type === "done") return settings;
     if (action.type === "restoreDefaults") {
       Object.assign(settings, { ...DEFAULT_SETTINGS });
+      setCurrentTheme(resolveTheme(settings.cliThemeId));
       continue;
     }
     if (action.type === "openOutputPath") {
@@ -217,7 +245,18 @@ export async function promptSettingsMenu(
     if (action.type === "openDefaultFormats") {
       const formats = await promptOutputFormatsMulti(settings.defaultFormats);
       if (formats !== null && formats.length > 0)
-        settings.defaultFormats = formats;
+        settings.defaultFormats = [...formats];
+      continue;
+    }
+    if (action.type === "openTheme") {
+      const themeAction = await promptThemeMenu(settings);
+      if (themeAction.type === "chosen" || themeAction.type === "saved") {
+        settings.cliThemeId = themeAction.cliThemeId;
+        setCurrentTheme(resolveTheme(themeAction.cliThemeId));
+      } else if (themeAction.type === "deleted") {
+        settings.cliThemeId = "default";
+        setCurrentTheme(getDefaultTheme("default"));
+      }
       continue;
     }
     if (action.type === "openCustomPrefix") {

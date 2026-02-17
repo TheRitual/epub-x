@@ -117,6 +117,12 @@ function imagePathsForChapterFile(md: string): string {
   return md.replace(/\]\(\s*__IMG__\//g, "](../__IMG__/");
 }
 
+function imagePathsForChapterFileHtml(html: string): string {
+  return html
+    .replace(/src="__IMG__\//g, 'src="../__IMG__/')
+    .replace(/src='__IMG__\//g, "src='../__IMG__/");
+}
+
 function headerToAnchorSlug(headerText: string): string {
   return headerText
     .toLowerCase()
@@ -267,7 +273,10 @@ export async function convertEpub(
       mediaType?: string;
     }
     let hrefToIdJson: Map<string, string> | null = null;
+    let imgDirJson: string | null = null;
     if (options.includeImages) {
+      imgDirJson = path.join(bookDir, IMG_SUBDIR);
+      fs.mkdirSync(imgDirJson, { recursive: true });
       hrefToIdJson = new Map<string, string>();
       for (const [id, item] of Object.entries(epub.manifest) as [
         string,
@@ -291,7 +300,7 @@ export async function convertEpub(
       const raw = await epub.getChapterRawAsync(id);
       let bodyHtml = extractBodyInnerHtml(raw);
       bodyHtml = decodeHtmlEntities(bodyHtml);
-      if (options.includeImages && hrefToIdJson) {
+      if (options.includeImages && hrefToIdJson && imgDirJson) {
         const chapterHref = chapter?.href ?? "";
         const imgTagRe = /<img[^>]+src\s*=\s*["']([^"']+)["'][^>]*>/gi;
         const matches: { full: string; src: string; index: number }[] = [];
@@ -312,11 +321,13 @@ export async function convertEpub(
             manifestIdToImgId.set(manifestId, imgId);
             try {
               const [buf, mime] = await epub.getImageAsync(manifestId);
-              const mimeType = mime?.startsWith("image/") ? mime : "image/png";
-              imagesMap.set(imgId, {
-                mimeType,
-                data: buf.toString("base64"),
-              });
+              const extImg = mime?.startsWith("image/")
+                ? (mime.split("/")[1] ?? "png")
+                : "png";
+              const safeName = `${manifestId.replace(/[^a-zA-Z0-9_-]/g, "_")}.${extImg}`;
+              const outPath = path.join(imgDirJson, safeName);
+              fs.writeFileSync(outPath, buf);
+              imagesMap.set(imgId, { url: `${IMG_SUBDIR}/${safeName}` });
             } catch {
               continue;
             }
@@ -387,7 +398,9 @@ export async function convertEpub(
         metadata,
         toc,
         chapters: chapterRefs,
-        images: Object.fromEntries(imagesMap),
+        ...(options.includeImages && imagesMap.size > 0
+          ? { images: Object.fromEntries(imagesMap) }
+          : {}),
       };
       fs.writeFileSync(
         mainFilePath,
@@ -400,7 +413,9 @@ export async function convertEpub(
         metadata,
         toc,
         chapters,
-        images: Object.fromEntries(imagesMap),
+        ...(options.includeImages && imagesMap.size > 0
+          ? { images: Object.fromEntries(imagesMap) }
+          : {}),
       };
       fs.writeFileSync(
         mainFilePath,
@@ -595,6 +610,7 @@ export async function convertEpub(
         if (indexLink) chapterContent = chapterContent + indexLink;
       }
       if (format === "html") {
+        chapterContent = imagePathsForChapterFileHtml(chapterContent);
         if (indexLinkHtml) chapterContent = chapterContent + indexLinkHtml;
         chapterContent = chapterContent + getExtractionFooter("html");
         const wrapped = wrapHtmlBody(chapterContent, options);

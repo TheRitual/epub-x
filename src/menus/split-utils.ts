@@ -1,4 +1,5 @@
 import process from "node:process";
+import { getCurrentTheme } from "../themes/context.js";
 import { clearScreen } from "./utils.js";
 import {
   styleHint,
@@ -95,17 +96,30 @@ export function drawSplitFrame(
       : theme.dim + theme.hint + rightTitleText) +
     theme.reset;
 
+  const f = getCurrentTheme().frameStyle;
   clearScreen();
-  process.stdout.write("╭" + "─".repeat(totalWidth - 2) + "╮\n");
   process.stdout.write(
-    "│ " +
-      padLine(leftTitleStyled, leftW) +
-      " │ " +
-      padLine(rightTitleStyled, rightW) +
-      " │\n"
+    f.topLeft + f.horizontal.repeat(totalWidth - 2) + f.topRight + "\n"
   );
   process.stdout.write(
-    "├" + "─".repeat(leftW + 2) + "┼" + "─".repeat(rightW + 2) + "┤\n"
+    f.vertical +
+      " " +
+      padLine(leftTitleStyled, leftW) +
+      " " +
+      f.vertical +
+      " " +
+      padLine(rightTitleStyled, rightW) +
+      " " +
+      f.vertical +
+      "\n"
+  );
+  process.stdout.write(
+    f.dividerLeft +
+      f.horizontal.repeat(leftW + 2) +
+      f.dividerCross +
+      f.horizontal.repeat(rightW + 2) +
+      f.dividerRight +
+      "\n"
   );
 
   const maxRows = Math.max(leftVisible.length, rightVisible.length);
@@ -116,28 +130,51 @@ export function drawSplitFrame(
     const rightLine = rightVisible[i]
       ? " " + padLine(rightVisible[i]!, rightW) + " "
       : " ".repeat(rightW + 2);
-    process.stdout.write("│" + leftLine + "│" + rightLine + "│\n");
+    process.stdout.write(
+      f.vertical + leftLine + f.vertical + rightLine + f.vertical + "\n"
+    );
   }
 
-  process.stdout.write("├" + "─".repeat(totalWidth - 2) + "┤\n");
   process.stdout.write(
-    "│ " + padLine(styleMessage(status), totalWidth - 4) + " │\n"
+    f.dividerLeft + f.horizontal.repeat(totalWidth - 2) + f.dividerRight + "\n"
   );
-  process.stdout.write("├" + "─".repeat(totalWidth - 2) + "┤\n");
   process.stdout.write(
-    "│ " + padLine(styleHintTips(commonHint), totalWidth - 4) + " │\n"
+    f.vertical +
+      " " +
+      padLine(styleMessage(status), totalWidth - 4) +
+      " " +
+      f.vertical +
+      "\n"
+  );
+  process.stdout.write(
+    f.dividerLeft + f.horizontal.repeat(totalWidth - 2) + f.dividerRight + "\n"
+  );
+  process.stdout.write(
+    f.vertical +
+      " " +
+      padLine(styleHintTips(commonHint), totalWidth - 4) +
+      " " +
+      f.vertical +
+      "\n"
   );
   const ctxHint = leftActive ? browserHint : selectedHint;
   const ctxLeft = leftActive ? ctxHint : "";
   const ctxRight = !leftActive ? ctxHint : "";
   process.stdout.write(
-    "│ " +
+    f.vertical +
+      " " +
       padLine(styleHintTips(truncateToWidth(ctxLeft, leftW)), leftW) +
-      " │ " +
+      " " +
+      f.vertical +
+      " " +
       padLine(styleHintTips(truncateToWidth(ctxRight, rightW)), rightW) +
-      " │\n"
+      " " +
+      f.vertical +
+      "\n"
   );
-  process.stdout.write("╰" + "─".repeat(totalWidth - 2) + "╯\n");
+  process.stdout.write(
+    f.bottomLeft + f.horizontal.repeat(totalWidth - 2) + f.bottomRight + "\n"
+  );
 }
 
 export function formatLeftEntry(

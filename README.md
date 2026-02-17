@@ -1,4 +1,4 @@
-# epub-x
+# @ritual/ebook-x
 
 Interactive Node.js CLI to extract book text from EPUB files to **plain text** (`.txt`), **Markdown** (`.md`), **JSON** (`.json`), or **HTML** (`.html`). Output is written to an `output/` directory with optional chapter titles, table of contents, and image extraction (MD/HTML).
 
@@ -19,7 +19,7 @@ Interactive Node.js CLI to extract book text from EPUB files to **plain text** (
    - **TXT only:** Add chapter titles, chapter title style.
    - **MD only:** Include images, create TOC for MD files, create index file with TOC for chapters, add back link to chapters (when split + index TOC are on).
    - **HTML only:** HTML style – keep original (epub-like) or use custom theme (default: papyrus-like background, dark brown text, Lato/Roboto/Arial).
-   - On a setting row, press **Space** to cycle the value (e.g. Yes ↔ No); **Enter** to confirm and return to the list. Stored in the system config directory (Linux: `~/.config/epub-x`, macOS: `~/Library/Application Support/epub-x`, Windows: `%LOCALAPPDATA%\\epub-x`).
+   - On a setting row, press **Space** to cycle the value (e.g. Yes ↔ No); **Enter** to confirm and return to the list. Stored in the system config directory (Linux: `~/.config/ebook-x`, macOS: `~/Library/Application Support/ebook-x`, Windows: `%LOCALAPPDATA%\\ebook-x`).
 
 **Output structure:** Each book is written under a directory named after the output basename. The main file is inside that directory. Example for basename `book` with images and split chapters (MD):
 
@@ -35,14 +35,14 @@ Interactive Node.js CLI to extract book text from EPUB files to **plain text** (
 
 ```bash
 npm install -g .
-# or, after publishing: npm install -g epub-x
-epub-x
+# or, after publishing: npm install -g @ritual/ebook-x
+ebook-x
 ```
 
 **Run without installing (JSR):**
 
 ```bash
-npx jsr run @ritual/epub-x
+npx jsr run @ritual/ebook-x
 ```
 
 **Local development:**
@@ -97,6 +97,6 @@ npm run build && npm run run
 
 ## Copyright and licence
 
-Copyright (c) 2025 epub-x contributors.
+Copyright (c) 2025 ebook-x contributors.
 
 This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.

@@ -32,8 +32,7 @@ export interface EpubExportChapter {
 }
 
 export interface EpubExportImage {
-  mimeType: string;
-  data: string;
+  url: string;
 }
 
 export interface EpubExportJson {
@@ -41,5 +40,5 @@ export interface EpubExportJson {
   metadata: EpubExportMetadata;
   toc: EpubExportTocEntry[];
   chapters: EpubExportChapter[];
-  images: Record<string, EpubExportImage>;
+  images?: Record<string, EpubExportImage>;
 }

@@ -12,6 +12,7 @@ import {
   styleSettingValue,
   styleSectionBold,
   styleSelectedRow,
+  styleDone,
 } from "../menus/colors.js";
 import {
   getSelectPageSize,
@@ -20,6 +21,7 @@ import {
   frameTop,
   frameBottom,
   frameLine,
+  truncateToPlainLength,
   PAGE_JUMP,
 } from "../menus/utils.js";
 
@@ -196,9 +198,30 @@ export type SettingsListAction =
   | { type: "cancel" }
   | { type: "openOutputPath" }
   | { type: "openDefaultFormats" }
+  | { type: "openTheme" }
   | { type: "openCustomPrefix" }
   | { type: "restoreDefaults" }
   | { type: "none" };
+
+const SELECTION_MARGIN = 5;
+const SCROLLBAR_THUMB = "█";
+const SCROLLBAR_TRACK = " ";
+
+function getScrollbarChar(
+  listLineIndex: number,
+  pageSize: number,
+  totalRows: number,
+  start: number
+): string {
+  const thumbHeight = Math.max(
+    1,
+    Math.round((pageSize * pageSize) / totalRows)
+  );
+  const thumbStart = Math.floor((start / totalRows) * pageSize);
+  return thumbStart <= listLineIndex && listLineIndex < thumbStart + thumbHeight
+    ? SCROLLBAR_THUMB
+    : SCROLLBAR_TRACK;
+}
 
 function visibleStart(
   index: number,
@@ -206,7 +229,8 @@ function visibleStart(
   pageSize: number
 ): number {
   if (rows.length <= pageSize) return 0;
-  return Math.max(0, Math.min(index, rows.length - pageSize));
+  const start = index - SELECTION_MARGIN;
+  return Math.max(0, Math.min(start, rows.length - pageSize));
 }
 
 const MIN_VALUE_COLUMN = 42;
@@ -285,28 +309,67 @@ export function promptSettingsList(
         Math.max(20, width - 4)
       ).slice(0, DESCRIPTION_LINES);
       const descriptionLines = descriptionWrapped.map((l) => styleHint(l));
-      const lines: string[] = [
-        message,
-        "",
-        ...visible.map((row, i) => {
-          const globalIndex = start + i;
-          const isSelected = globalIndex === index;
+      const showScrollbar = rows.length > pageSize;
+      const innerWidth = Math.max(0, showScrollbar ? width - 5 : width - 4);
+      const rowLines: string[] = [];
+      const rowLineToLogicalIndex: number[] = [];
+      for (let i = 0; i < visible.length; i++) {
+        const row = visible[i]!;
+        const globalIndex = start + i;
+        const isSelected = globalIndex === index;
+        if (row.value === "__done__") {
+          rowLines.push("");
+          rowLineToLogicalIndex.push(i);
+          const doneLabel = isSelected ? "> Done <" : "Done";
+          const plainLen = doneLabel.length;
+          const leftPad = Math.floor((innerWidth - plainLen) / 2);
+          const rightPad = innerWidth - plainLen - leftPad;
+          const centered =
+            " ".repeat(leftPad) + doneLabel + " ".repeat(rightPad);
+          const doneLine = isSelected
+            ? styleSelectedRow(centered)
+            : " ".repeat(leftPad) + styleDone("Done") + " ".repeat(rightPad);
+          rowLines.push(doneLine);
+          rowLineToLogicalIndex.push(i);
+        } else {
           const isSep =
+            row.value === "__sep_app__" ||
             row.value === "__sep__" ||
             row.value === "__sep2__" ||
             row.value === "__sep3__" ||
             row.value === "__sep4__" ||
             row.value === "__sep5__";
-          return formatSettingsRow(row, valueColumn, isSelected, isSep);
-        }),
+          rowLines.push(formatSettingsRow(row, valueColumn, isSelected, isSep));
+          rowLineToLogicalIndex.push(i);
+        }
+      }
+      const lines: string[] = [
+        message,
+        "",
+        ...rowLines,
         "",
         hint,
         ...(descriptionLines.length > 0 ? ["", ...descriptionLines] : []),
       ];
       clearScreen();
       process.stdout.write(frameTop(width) + "\n");
-      for (const line of lines) {
-        process.stdout.write(frameLine(line, width) + "\n");
+      const contentWidth = showScrollbar ? width - 5 : width - 4;
+      for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+        const rawLine = lines[lineIndex]!;
+        const line = showScrollbar
+          ? truncateToPlainLength(rawLine, contentWidth)
+          : rawLine;
+        const scrollbarChar = showScrollbar
+          ? lineIndex >= 2 && lineIndex < 2 + rowLines.length
+            ? getScrollbarChar(
+                rowLineToLogicalIndex[lineIndex - 2] ?? 0,
+                pageSize,
+                rows.length,
+                start
+              )
+            : SCROLLBAR_TRACK
+          : undefined;
+        process.stdout.write(frameLine(line, width, scrollbarChar) + "\n");
       }
       process.stdout.write(frameBottom(width) + "\n");
     };
@@ -434,6 +497,11 @@ export function promptSettingsList(
         if (row.value === "defaultFormats") {
           cleanup();
           resolve({ type: "openDefaultFormats" });
+          return;
+        }
+        if (row.value === "theme") {
+          cleanup();
+          resolve({ type: "openTheme" });
           return;
         }
         if (row.value === "chapterFileNameCustomPrefix") {

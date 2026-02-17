@@ -16,6 +16,7 @@ import { clearScreen } from "./menus/utils.js";
 import { convertEpub, resolveOutputDir } from "./converter/index.js";
 import { loadSettings, saveSettings } from "./settings/storage.js";
 import { promptSettingsMenu } from "./settings/menu.js";
+import { setCurrentTheme, resolveTheme } from "./themes/index.js";
 import type { AppSettings } from "./settings/types.js";
 import type { ConvertOptions } from "./converter/types.js";
 import { exitNicely } from "./exit.js";
@@ -76,8 +77,9 @@ async function run(): Promise<void> {
   });
 
   let settings = loadSettings();
+  setCurrentTheme(resolveTheme(settings.cliThemeId));
   const outputDir = resolveOutputDir(settings.outputPath);
-  console.log("epub-x – ebook extractor");
+  console.log("ebook-x – ebook extractor");
   console.log("Output directory: " + outputDir + "\n");
 
   for (;;) {

@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/epub-export-json-schema.json",
+  "title": "EPUB export JSON format",
+  "description": "JSON output produced when exporting an EPUB to JSON (version 1.0)",
+  "type": "object",
+  "required": ["version", "metadata", "toc", "chapters"],
+  "properties": {
+    "version": {
+      "const": "1.0",
+      "description": "Format version string"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EpubExportMetadata",
+      "description": "Book metadata from the EPUB"
+    },
+    "toc": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/EpubExportTocEntry" },
+      "description": "Table of contents entries"
+    },
+    "chapters": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/EpubExportChapter" },
+      "description": "Ordered chapters (main file) or chapter references (when split)"
+    },
+    "images": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/EpubExportImage" },
+      "description": "When image extraction is enabled: map image id (e.g. img_<uuid>) to image url. Omitted when extraction is disabled.",
+      "propertyNames": {
+        "pattern": "^img_[0-9a-fA-F-]{36}$",
+        "description": "Image id: prefix img_ + UUID"
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "EpubExportMetadata": {
+      "type": "object",
+      "description": "Book metadata (Dublin Core / EPUB)",
+      "properties": {
+        "title": { "type": "string" },
+        "creator": { "type": "string" },
+        "creatorFileAs": { "type": "string" },
+        "publisher": { "type": "string" },
+        "language": { "type": "string" },
+        "subject": { "type": "array", "items": { "type": "string" } },
+        "description": { "type": "string" },
+        "date": { "type": "string" },
+        "isbn": { "type": "string" },
+        "uuid": { "type": "string" },
+        "cover": { "type": "string" },
+        "belongs-to-collection": { "type": "string" },
+        "collection-type": { "type": "string" }
+      },
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "array", "items": { "type": "string" } }
+        ]
+      }
+    },
+    "EpubExportTocEntry": {
+      "type": "object",
+      "required": ["title", "id", "chapterId"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Display title of the TOC entry"
+        },
+        "level": {
+          "type": "integer",
+          "description": "Nesting level (e.g. 1 for top-level)"
+        },
+        "order": { "type": "integer", "description": "Reading order index" },
+        "id": {
+          "type": "string",
+          "description": "Unique id (prefix toc_ + UUID)"
+        },
+        "chapterId": {
+          "type": "string",
+          "description": "Chapter id this entry points to (prefix chap_ + UUID)"
+        }
+      }
+    },
+    "EpubExportChapter": {
+      "type": "object",
+      "required": ["id", "index", "title"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique chapter id (prefix chap_ + UUID)"
+        },
+        "index": {
+          "type": "integer",
+          "description": "1-based reading order index"
+        },
+        "title": { "type": "string", "description": "Chapter title" },
+        "content": {
+          "type": "string",
+          "description": "Plain text content; may contain {{img_<uuid>}} placeholders"
+        },
+        "file": {
+          "type": "string",
+          "description": "Path to chapter file when split (e.g. chapters/book-chapter-1.json)"
+        }
+      }
+    },
+    "EpubExportImage": {
+      "type": "object",
+      "required": ["url"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Path to image file relative to book directory (e.g. __IMG__/filename.png)"
+        }
+      }
+    }
+  }
+}

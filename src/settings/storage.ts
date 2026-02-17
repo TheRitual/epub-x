@@ -1,21 +1,28 @@
 import fs from "node:fs";
 import path from "node:path";
-import os from "node:os";
 import type { AppSettings } from "./types.js";
 import { DEFAULT_SETTINGS } from "./types.js";
+import type { OutputFormat } from "../menus/types.js";
+import { getConfigDir } from "../utils/config-dir.js";
 
-function getConfigDir(): string {
-  const home = os.homedir();
-  if (process.platform === "win32") {
-    const base =
-      process.env.LOCALAPPDATA ?? path.join(home, "AppData", "Local");
-    return path.join(base, "epub-x");
-  }
-  if (process.platform === "darwin") {
-    return path.join(home, "Library", "Application Support", "epub-x");
-  }
-  const base = process.env.XDG_CONFIG_HOME ?? path.join(home, ".config");
-  return path.join(base, "epub-x");
+const VALID_OUTPUT_FORMATS: OutputFormat[] = ["txt", "md", "json", "html"];
+
+function normalizeDefaultFormats(
+  raw: unknown,
+  legacySingle: string | undefined
+): AppSettings["defaultFormats"] {
+  const fromArray = Array.isArray(raw)
+    ? (raw as string[]).filter((f): f is OutputFormat =>
+        VALID_OUTPUT_FORMATS.includes(f as OutputFormat)
+      )
+    : [];
+  if (fromArray.length > 0) return fromArray;
+  if (
+    typeof legacySingle === "string" &&
+    VALID_OUTPUT_FORMATS.includes(legacySingle as OutputFormat)
+  )
+    return [legacySingle as OutputFormat];
+  return [...DEFAULT_SETTINGS.defaultFormats];
 }
 
 function getSettingsPath(): string {
@@ -40,14 +47,12 @@ export function loadSettings(): AppSettings {
     if (parsed.htmlUseOriginalStyle !== undefined && !("htmlStyle" in parsed)) {
       result.htmlStyle = parsed.htmlUseOriginalStyle ? "none" : "custom";
     }
-    if (
-      !Array.isArray(result.defaultFormats) ||
-      result.defaultFormats.length === 0
-    ) {
-      result.defaultFormats =
-        typeof parsed.defaultFormat === "string"
-          ? [parsed.defaultFormat]
-          : DEFAULT_SETTINGS.defaultFormats;
+    result.defaultFormats = normalizeDefaultFormats(
+      result.defaultFormats,
+      parsed.defaultFormat
+    );
+    if (typeof result.cliThemeId !== "string" || !result.cliThemeId.trim()) {
+      result.cliThemeId = DEFAULT_SETTINGS.cliThemeId;
     }
     return result;
   } catch {
@@ -57,5 +62,9 @@ export function loadSettings(): AppSettings {
 
 export function saveSettings(settings: AppSettings): void {
   const settingsPath = getSettingsPath();
-  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf-8");
+  const payload: AppSettings = {
+    ...settings,
+    defaultFormats: [...settings.defaultFormats],
+  };
+  fs.writeFileSync(settingsPath, JSON.stringify(payload, null, 2), "utf-8");
 }

@@ -1,4 +1,5 @@
 import process from "node:process";
+import { getCurrentTheme } from "../themes/context.js";
 
 const MIN_PAGE_SIZE = 10;
 const RESERVE_ROWS = 6;
@@ -21,34 +22,75 @@ function stripAnsi(s: string): string {
   return s.replace(/\x1b\[[\d;]*m/g, "");
 }
 
+export function truncateToPlainLength(str: string, maxPlain: number): string {
+  const plain = stripAnsi(str);
+  if (plain.length <= maxPlain) return str;
+  let count = 0;
+  let result = "";
+  let i = 0;
+  while (i < str.length && count < maxPlain) {
+    if (str[i] === "\x1b" && str[i + 1] === "[") {
+      const end = str.indexOf("m", i + 2);
+      result += end === -1 ? str[i]! : str.slice(i, end + 1);
+      i = end === -1 ? i + 1 : end + 1;
+      continue;
+    }
+    result += str[i];
+    count++;
+    i++;
+  }
+  const reset = "\x1b[0m";
+  return result + (result.endsWith(reset) ? "" : reset);
+}
+
+function getFrame(): ReturnType<typeof getCurrentTheme>["frameStyle"] {
+  return getCurrentTheme().frameStyle;
+}
+
 export function frameMessage(message: string): string {
   const w = getFrameWidth();
+  const f = getFrame();
   const inner = Math.max(4, w - 4);
   const padded = message.slice(0, inner).padEnd(inner);
   return (
-    "╭" +
-    "─".repeat(w - 2) +
-    "╮\n│ " +
+    f.topLeft +
+    f.horizontal.repeat(w - 2) +
+    f.topRight +
+    "\n" +
+    f.vertical +
+    " " +
     padded +
-    " │\n╰" +
-    "─".repeat(w - 2) +
-    "╯"
+    " " +
+    f.vertical +
+    "\n" +
+    f.bottomLeft +
+    f.horizontal.repeat(w - 2) +
+    f.bottomRight
   );
 }
 
 export function frameTop(width: number): string {
-  return "╭" + "─".repeat(width - 2) + "╮";
+  const f = getFrame();
+  return f.topLeft + f.horizontal.repeat(width - 2) + f.topRight;
 }
 
 export function frameBottom(width: number): string {
-  return "╰" + "─".repeat(width - 2) + "╯";
+  const f = getFrame();
+  return f.bottomLeft + f.horizontal.repeat(width - 2) + f.bottomRight;
 }
 
-export function frameLine(line: string, width: number): string {
-  const inner = width - 4;
+export function frameLine(
+  line: string,
+  width: number,
+  scrollbarChar?: string
+): string {
+  const f = getFrame();
+  const inner = scrollbarChar !== undefined ? width - 5 : width - 4;
   const plain = stripAnsi(line);
   const pad = plain.length < inner ? " ".repeat(inner - plain.length) : "";
-  return "│ " + line + pad + " │";
+  const right =
+    scrollbarChar !== undefined ? scrollbarChar + f.vertical : " " + f.vertical;
+  return f.vertical + " " + line + pad + right;
 }
 
 export function frameMultipleLines(lines: string[]): string {

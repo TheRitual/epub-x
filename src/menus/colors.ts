@@ -1,82 +1,115 @@
-const reset = "\x1b[0m";
-const blue = "\x1b[34m";
-const purple = "\x1b[35m";
-const pink = "\x1b[95m";
-const cyan = "\x1b[36m";
-const dim = "\x1b[2m";
-const bold = "\x1b[1m";
-const green = "\x1b[32m";
-const red = "\x1b[31m";
-const yellow = "\x1b[33m";
-const white = "\x1b[37m";
-const brightWhite = "\x1b[97m";
-const orange = "\x1b[38;5;208m";
-const bgMagenta = "\x1b[45m";
+import { getCurrentTheme } from "../themes/context.js";
+
+export function getThemeColors(): ReturnType<typeof getCurrentTheme>["colors"] {
+  return getCurrentTheme().colors;
+}
+
+function themeGetter<
+  K extends keyof ReturnType<typeof getCurrentTheme>["colors"],
+>(key: K): ReturnType<typeof getCurrentTheme>["colors"][K] {
+  return getCurrentTheme().colors[key];
+}
 
 export const theme = {
-  reset,
-  section: blue,
-  sectionBold: blue + bold,
-  selected: pink,
-  selectedBg: bgMagenta,
-  accent: purple,
-  hint: cyan,
-  dim,
-  message: purple,
-  blue,
-  pink,
-  purple,
-  valueYes: green,
-  valueNo: red,
-  valueOther: yellow,
-  bold,
-  white,
-  orange,
+  get reset() {
+    return themeGetter("reset");
+  },
+  get bold() {
+    return themeGetter("bold");
+  },
+  get dim() {
+    return themeGetter("dim");
+  },
+  get message() {
+    return themeGetter("message");
+  },
+  get section() {
+    return themeGetter("section");
+  },
+  get sectionBold() {
+    return themeGetter("sectionBold");
+  },
+  get selected() {
+    return themeGetter("selected");
+  },
+  get selectedBg() {
+    return themeGetter("selectedBg");
+  },
+  get selectedRowText() {
+    return themeGetter("selectedRowText");
+  },
+  get unselectedItem() {
+    return themeGetter("unselectedItem");
+  },
+  get hintKey() {
+    return themeGetter("hintKey");
+  },
+  get hintDescription() {
+    return themeGetter("hintDescription");
+  },
+  get hint() {
+    return themeGetter("hint");
+  },
+  get valueYes() {
+    return themeGetter("valueYes");
+  },
+  get valueNo() {
+    return themeGetter("valueNo");
+  },
+  get valueOther() {
+    return themeGetter("valueOther");
+  },
+  get accent() {
+    return themeGetter("accent");
+  },
 };
 
 export function styleMessage(text: string): string {
-  return theme.message + text + theme.reset;
+  const t = getCurrentTheme().colors;
+  return t.message + text + t.reset;
 }
 
 export function styleSection(text: string): string {
-  return theme.section + text + theme.reset;
+  const t = getCurrentTheme().colors;
+  return t.section + text + t.reset;
 }
 
 export function styleSelected(text: string): string {
-  return theme.selected + text + theme.reset;
+  const t = getCurrentTheme().colors;
+  return t.selected + text + t.reset;
 }
 
 export function styleHint(text: string): string {
-  return theme.dim + theme.hint + text + theme.reset;
+  const t = getCurrentTheme().colors;
+  return t.dim + t.hint + text + t.reset;
 }
 
 export function styleSelectedRow(text: string): string {
-  return theme.selectedBg + brightWhite + bold + text + reset;
+  const t = getCurrentTheme().colors;
+  return t.selectedBg + t.selectedRowText + text + t.reset;
 }
 
 export function styleHintTips(text: string): string {
+  const t = getCurrentTheme().colors;
   const withoutPipe = text.replace(/\|/g, "").trim();
   const segments = withoutPipe.split(/\s{2,}/);
   const parts = segments.map((seg) => {
     const spaceIdx = seg.indexOf(" ");
     const key = spaceIdx === -1 ? seg : seg.slice(0, spaceIdx);
     const desc = spaceIdx === -1 ? "" : seg.slice(spaceIdx + 1);
-    const keyStyled = theme.orange + key + theme.reset;
+    const keyStyled = t.hintKey + key + t.reset;
     const descStyled =
-      desc === "" ? "" : theme.white + " " + desc + theme.reset;
+      desc === "" ? "" : t.hintDescription + " " + desc + t.reset;
     return keyStyled + descStyled;
   });
-  return parts.join(theme.white + "  " + theme.reset);
+  return parts.join(t.hintDescription + "  " + t.reset);
 }
 
 export function styleSettingValue(value: string): string {
+  const t = getCurrentTheme().colors;
   const color =
-    value === "Yes"
-      ? theme.valueYes
-      : value === "No"
-        ? theme.valueNo
-        : theme.valueOther;
-  return color + theme.bold + value + theme.reset;
+    value === "Yes" ? t.valueYes : value === "No" ? t.valueNo : t.valueOther;
+  return color + t.bold + value + t.reset;
 }
 
 export function styleSettingLabel(name: string): string {
@@ -88,16 +121,46 @@ export function styleSettingLabel(name: string): string {
 }
 
 export function styleSectionBold(text: string): string {
-  return theme.sectionBold + text + theme.reset;
+  const t = getCurrentTheme().colors;
+  return t.sectionBold + text + t.reset;
+}
+
+const BOLD_WHITE = "\x1b[1;37m";
+const RESET = "\x1b[0m";
+
+export function styleDone(text: string): string {
+  return BOLD_WHITE + text + RESET;
+}
+
+export function getInquirerTheme(): {
+  prefix: string;
+  style: {
+    message: (text: string) => string;
+    help: (text: string) => string;
+    highlight: (text: string) => string;
+    key: (text: string) => string;
+    answer: (text: string) => string;
+  };
+} {
+  const t = getCurrentTheme().colors;
+  return {
+    prefix: t.accent + "?" + t.reset + " ",
+    style: {
+      message: (text: string): string => t.accent + t.bold + text + t.reset,
+      help: (text: string): string => t.dim + t.hint + text + t.reset,
+      highlight: (text: string): string => t.selected + text + t.reset,
+      key: (text: string): string =>
+        t.hint + t.bold + "<" + text + ">" + t.reset,
+      answer: (text: string): string => t.section + text + t.reset,
+    },
+  };
 }
 
 export const inquirerTheme = {
-  prefix: purple + "?" + reset + " ",
-  style: {
-    message: (text: string): string => purple + bold + text + reset,
-    help: (text: string): string => dim + cyan + text + reset,
-    highlight: (text: string): string => pink + text + reset,
-    key: (text: string): string => cyan + bold + "<" + text + ">" + reset,
-    answer: (text: string): string => blue + text + reset,
+  get prefix(): string {
+    return getInquirerTheme().prefix;
+  },
+  get style(): ReturnType<typeof getInquirerTheme>["style"] {
+    return getInquirerTheme().style;
   },
 };
