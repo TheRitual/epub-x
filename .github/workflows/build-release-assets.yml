@@ -51,6 +51,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build
+      - run: Get-ChildItem -Path dist -Recurse -Filter "*.js.map" | Remove-Item -Force
       - run: npx pkg . -t node20-win-x64 -o ebook-x-win-x64
       - run: |
           $version = "${{ needs.resolve-tag.outputs.tag }}".TrimStart('v')
@@ -74,6 +75,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build
+      - run: find dist -name "*.js.map" -delete
       - run: npx pkg . -t node20-macos-x64,node20-macos-arm64 -o ebook-x
       - run: |
           version="${{ needs.resolve-tag.outputs.tag }}"
@@ -101,6 +103,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build
+      - run: find dist -name "*.js.map" -delete
       - run: npx pkg . -t node20-linux-x64 -o ebook-x-linux-x64
       - run: |
           version="${{ needs.resolve-tag.outputs.tag }}"
@@ -109,7 +112,7 @@ jobs:
           chmod +x "ebook-x-${version}-linux-x64"
       - name: Install nfpm
         run: |
-          curl -sSfL https://github.com/goreleaser/nfpm/releases/download/v2.36.2/nfpm_2.36.2_amd64.deb -o nfpm.deb
+          curl -sSfL https://github.com/goreleaser/nfpm/releases/download/v2.45.0/nfpm_2.45.0_amd64.deb -o nfpm.deb
           sudo dpkg -i nfpm.deb
       - name: Create deb and rpm
         run: |
