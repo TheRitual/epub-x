@@ -1,3 +1,9 @@
+# [1.3.0](https://github.com/TheRitual/ebook-x/compare/v1.2.8...v1.3.0) (2026-02-17)
+
+### Features
+
+- Add ebook-x icon and update desktop entry in build-release-assets workflow ([4a88a5e](https://github.com/TheRitual/ebook-x/commit/4a88a5e434d1fb75611915fa55a30b389d8d6cf5))
+
 ## [1.2.8](https://github.com/TheRitual/ebook-x/compare/v1.2.7...v1.2.8) (2026-02-17)
 
 ### Bug Fixes
