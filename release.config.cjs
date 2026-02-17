@@ -9,10 +9,7 @@ const config = {
       },
     ],
     "@semantic-release/release-notes-generator",
-    [
-      "@semantic-release/changelog",
-      { changelogFile: "CHANGELOG.md" },
-    ],
+    ["@semantic-release/changelog", { changelogFile: "CHANGELOG.md" }],
     "@sebbo2002/semantic-release-jsr",
     [
       "@semantic-release/git",
@@ -22,10 +19,7 @@ const config = {
           "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
       },
     ],
-    [
-      "@semantic-release/github",
-      { labels: false },
-    ],
+    ["@semantic-release/github", { labels: false }],
   ],
 };
 
