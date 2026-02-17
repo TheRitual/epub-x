@@ -1,5 +1,8 @@
 node_modules/
 dist/
+ebook-x
+ebook-x-*
+*.exe
 *.log
 .DS_Store
 .env
