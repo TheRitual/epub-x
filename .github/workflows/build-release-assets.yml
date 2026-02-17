@@ -132,7 +132,8 @@ jobs:
           mkdir -p AppDir/usr/bin
           cp "ebook-x-${version}-linux-x64" AppDir/usr/bin/ebook-x
           chmod +x AppDir/usr/bin/ebook-x
-          printf '[Desktop Entry]\nType=Application\nName=ebook-x\nExec=ebook-x %%F\nCategories=Utility;\n' > AppDir/ebook-x.desktop
+          cp .github/icons/ebook-x.svg AppDir/ebook-x.svg
+          printf '[Desktop Entry]\nType=Application\nName=ebook-x\nIcon=ebook-x\nExec=ebook-x %%F\nCategories=Utility;\n' > AppDir/ebook-x.desktop
           ln -s usr/bin/ebook-x AppDir/AppRun
           curl -sSfL https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -o appimagetool
           chmod +x appimagetool
