@@ -1,3 +1,9 @@
+## [1.2.2](https://github.com/TheRitual/ebook-x/compare/v1.2.1...v1.2.2) (2026-02-17)
+
+### Bug Fixes
+
+- Correct version syntax in nfpm.yaml and improve formatting in run-extract.mjs ([d621c05](https://github.com/TheRitual/ebook-x/commit/d621c050c97683c70df9b95718e4dff9ee451780))
+
 # Unreleased
 
 ### Fixed
