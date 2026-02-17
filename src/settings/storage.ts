@@ -62,9 +62,17 @@ export function loadSettings(): AppSettings {
 
 export function saveSettings(settings: AppSettings): void {
   const settingsPath = getSettingsPath();
+  const defaultFormats = Array.isArray(settings.defaultFormats)
+    ? [...settings.defaultFormats]
+    : [...DEFAULT_SETTINGS.defaultFormats];
   const payload: AppSettings = {
     ...settings,
-    defaultFormats: [...settings.defaultFormats],
+    defaultFormats,
   };
-  fs.writeFileSync(settingsPath, JSON.stringify(payload, null, 2), "utf-8");
+  const content = JSON.stringify(payload, null, 2);
+  const dir = path.dirname(settingsPath);
+  fs.mkdirSync(dir, { recursive: true });
+  const tmpPath = path.join(dir, ".settings.json.tmp");
+  fs.writeFileSync(tmpPath, content, "utf-8");
+  fs.renameSync(tmpPath, settingsPath);
 }

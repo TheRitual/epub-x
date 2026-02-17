@@ -90,6 +90,7 @@ async function run(): Promise<void> {
       }
 
       if (action === "settings") {
+        settings = loadSettings();
         const next = await promptSettingsMenu(settings);
         if (next !== null) {
           settings = next;
@@ -107,6 +108,7 @@ async function run(): Promise<void> {
       }
 
       if (fileSelection === "settings") {
+        settings = loadSettings();
         const next = await promptSettingsMenu(settings);
         if (next !== null) {
           settings = next;
@@ -120,6 +122,7 @@ async function run(): Promise<void> {
 
       const changeSettings = await promptChangeSettingsBeforeConverting();
       if (changeSettings) {
+        settings = loadSettings();
         const next = await promptSettingsMenu(settings);
         if (next !== null) {
           settings = next;
