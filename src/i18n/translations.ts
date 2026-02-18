@@ -32,6 +32,7 @@ export interface AppTranslations {
   format_md: string;
   format_json: string;
   format_html: string;
+  format_webapp: string;
   output_filename: string;
   output_filename_error: string;
   output_filename_invalid: string;
@@ -92,6 +93,8 @@ export interface AppTranslations {
   sep_md: string;
   sep_html: string;
   sep_json: string;
+  sep_webapp: string;
+  webapp_chapter_new_page: string;
   setting_descriptions: Record<string, string>;
 }
 
@@ -170,6 +173,7 @@ const EN_APP: AppTranslations = {
   format_md: "Markdown (.md)",
   format_json: "JSON (.json)",
   format_html: "HTML (.html)",
+  format_webapp: "Web app (.html)",
   output_filename: "Output file name (without extension)",
   output_filename_error: "Please enter a non-empty name.",
   output_filename_invalid: 'Name must not contain <>:"/\\|?*',
@@ -231,6 +235,8 @@ const EN_APP: AppTranslations = {
   sep_md: "——— MD output only ———",
   sep_html: "——— HTML output only ———",
   sep_json: "——— JSON output only ———",
+  sep_webapp: "——— Web app output only ———",
+  webapp_chapter_new_page: "Chapter on new page",
   setting_descriptions: {},
 };
 
@@ -375,6 +381,7 @@ const PL_APP: Partial<AppTranslations> = {
   format_md: "Markdown (.md)",
   format_json: "JSON (.json)",
   format_html: "HTML (.html)",
+  format_webapp: "Aplikacja web (.html)",
   output_filename: "Nazwa pliku (bez rozszerzenia)",
   output_filename_error: "Wprowadź niepustą nazwę.",
   output_filename_invalid: 'Nazwa nie może zawierać <>:"/\\|?*',
@@ -437,6 +444,8 @@ const PL_APP: Partial<AppTranslations> = {
   sep_md: "——— Tylko MD ———",
   sep_html: "——— Tylko HTML ———",
   sep_json: "——— Tylko JSON ———",
+  sep_webapp: "——— Tylko aplikacja web ———",
+  webapp_chapter_new_page: "Rozdział na nowej stronie",
 };
 
 const PL_EXPORT: ExportTranslations = {
@@ -570,6 +579,7 @@ const DE_APP: Partial<AppTranslations> = {
   sep_md: "——— Nur MD ———",
   sep_html: "——— Nur HTML ———",
   sep_json: "——— Nur JSON ———",
+  sep_webapp: "——— Nur Web-App ———",
 };
 
 const DE_EXPORT: ExportTranslations = {
@@ -703,6 +713,7 @@ const FR_APP: Partial<AppTranslations> = {
   sep_md: "——— MD uniquement ———",
   sep_html: "——— HTML uniquement ———",
   sep_json: "——— JSON uniquement ———",
+  sep_webapp: "——— Application web uniquement ———",
 };
 
 const FR_EXPORT: ExportTranslations = {
@@ -836,6 +847,7 @@ const ES_APP: Partial<AppTranslations> = {
   sep_md: "——— Solo MD ———",
   sep_html: "——— Solo HTML ———",
   sep_json: "——— Solo JSON ———",
+  sep_webapp: "——— Solo aplicación web ———",
 };
 
 const ES_EXPORT: ExportTranslations = {
@@ -968,6 +980,7 @@ const IT_APP: Partial<AppTranslations> = {
   sep_md: "——— Solo MD ———",
   sep_html: "——— Solo HTML ———",
   sep_json: "——— Solo JSON ———",
+  sep_webapp: "——— Solo app web ———",
 };
 
 const IT_EXPORT: ExportTranslations = {
@@ -1101,6 +1114,7 @@ const PT_APP: Partial<AppTranslations> = {
   sep_md: "——— Só MD ———",
   sep_html: "——— Só HTML ———",
   sep_json: "——— Só JSON ———",
+  sep_webapp: "——— Só aplicação web ———",
 };
 
 const PT_EXPORT: ExportTranslations = {
@@ -1233,6 +1247,7 @@ const RU_APP: Partial<AppTranslations> = {
   sep_md: "——— Только MD ———",
   sep_html: "——— Только HTML ———",
   sep_json: "——— Только JSON ———",
+  sep_webapp: "——— Только веб-приложение ———",
 };
 
 const RU_EXPORT: ExportTranslations = {
@@ -1363,6 +1378,7 @@ const ZH_APP: Partial<AppTranslations> = {
   sep_md: "——— 仅 MD ———",
   sep_html: "——— 仅 HTML ———",
   sep_json: "——— 仅 JSON ———",
+  sep_webapp: "——— 仅 Web 应用 ———",
 };
 
 const ZH_EXPORT: ExportTranslations = {
@@ -1493,6 +1509,7 @@ const JA_APP: Partial<AppTranslations> = {
   sep_md: "——— MD のみ ———",
   sep_html: "——— HTML のみ ———",
   sep_json: "——— JSON のみ ———",
+  sep_webapp: "——— Webアプリのみ ———",
 };
 
 const JA_EXPORT: ExportTranslations = {

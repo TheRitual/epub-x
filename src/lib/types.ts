@@ -30,6 +30,7 @@ export interface ExtractOptionsBase {
   htmlStyle?: HtmlStyle;
   htmlStyleId?: string;
   exportLocale?: string;
+  chapterNewPage?: boolean;
 }
 
 export type ExtractOptions = ExtractOptionsBase;

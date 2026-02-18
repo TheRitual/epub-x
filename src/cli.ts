@@ -37,7 +37,7 @@ function isCancelOrExit(err: unknown): boolean {
 
 function settingsToConvertOptions(
   settings: AppSettings,
-  format: "txt" | "md" | "json" | "html",
+  format: "txt" | "md" | "json" | "html" | "webapp",
   perFile?: SelectedFile
 ): ConvertOptions {
   const opts: ConvertOptions = {
@@ -84,6 +84,12 @@ function settingsToConvertOptions(
     const fm = settings.formats.json;
     opts.includeImages = perFile?.includeImages ?? fm.includeImages;
     opts.splitChapters = fm.splitChapters;
+  } else if (format === "webapp") {
+    const fm = settings.formats.webapp;
+    opts.includeImages = perFile?.includeImages ?? fm.includeImages;
+    opts.htmlStyle = fm.style;
+    opts.htmlStyleId = fm.htmlStyleId;
+    opts.chapterNewPage = fm.chapterNewPage;
   }
   opts.exportLocale = resolveExportLocale(settings.exportLocale);
   return opts;

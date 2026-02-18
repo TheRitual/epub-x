@@ -1,4 +1,4 @@
-export type OutputFormat = "txt" | "md" | "json" | "html";
+export type OutputFormat = "txt" | "md" | "json" | "html" | "webapp";
 
 export type MainMenuAction = "convert" | "settings" | "howto" | "exit";
 

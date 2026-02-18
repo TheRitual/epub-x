@@ -12,7 +12,7 @@ function ensureOutputDir(dir: string): string {
 
 async function runOne(
   input: ExtractOptions,
-  format: "txt" | "md" | "html" | "json"
+  format: "txt" | "md" | "html" | "json" | "webapp"
 ): Promise<ExtractResult> {
   const outputDir = ensureOutputDir(input.outputPath);
   const options = buildConvertOptions(input, format);
@@ -63,6 +63,16 @@ export async function eXepub2json(
 ): Promise<ExtractResult | ExtractResult[]> {
   const items = normalizeInput(input);
   const results = await Promise.all(items.map((opts) => runOne(opts, "json")));
+  return items.length === 1 ? results[0]! : results;
+}
+
+export async function eXepub2webapp(
+  input: ExtractOptions | ExtractOptions[]
+): Promise<ExtractResult | ExtractResult[]> {
+  const items = normalizeInput(input);
+  const results = await Promise.all(
+    items.map((opts) => runOne(opts, "webapp"))
+  );
   return items.length === 1 ? results[0]! : results;
 }
 

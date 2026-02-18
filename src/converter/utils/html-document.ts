@@ -5,7 +5,7 @@ import {
   escapeCssValue,
 } from "../../html-styles/utils/validate-css.js";
 
-function buildCssFromStyle(style: HtmlStyleDefinition): string {
+export function buildCssFromStyle(style: HtmlStyleDefinition): string {
   const lines: string[] = [];
   for (const cls of style.classes) {
     const selector = "." + cls.class.replace(/[^a-z0-9-_]/gi, "");

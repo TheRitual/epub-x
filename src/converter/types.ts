@@ -1,4 +1,4 @@
-export type ConvertFormat = "txt" | "md" | "json" | "html";
+export type ConvertFormat = "txt" | "md" | "json" | "html" | "webapp";
 
 export type ChapterTitleStyleTxt = "separated" | "inline";
 
@@ -28,6 +28,7 @@ export interface ConvertOptions {
   htmlStyle?: HtmlStyle;
   htmlStyleId?: string;
   exportLocale?: string;
+  chapterNewPage?: boolean;
 }
 
 export interface EpubChapterInfo {

@@ -5,7 +5,7 @@ import type { ExtractOptions } from "../types.js";
 export function buildConvertOptions(
   input: ExtractOptions,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for format-specific defaults
-  _format: "txt" | "md" | "html" | "json"
+  _format: "txt" | "md" | "html" | "json" | "webapp"
 ): ConvertOptions {
   const opts: ConvertOptions = { ...defaultConvertOptions };
   opts.chapterIndices = input.chapterIndices ?? undefined;
@@ -41,5 +41,7 @@ export function buildConvertOptions(
   if (input.htmlStyle !== undefined) opts.htmlStyle = input.htmlStyle;
   if (input.htmlStyleId !== undefined) opts.htmlStyleId = input.htmlStyleId;
   if (input.exportLocale !== undefined) opts.exportLocale = input.exportLocale;
+  if (input.chapterNewPage !== undefined)
+    opts.chapterNewPage = input.chapterNewPage;
   return opts;
 }

@@ -30,9 +30,9 @@ function parseArgs(argv) {
 async function main() {
   const argv = process.argv.slice(2);
   const { format, sourcePath, opts } = parseArgs(argv);
-  if (!format || !["txt", "md", "html", "json"].includes(format)) {
+  if (!format || !["txt", "md", "html", "json", "webapp"].includes(format)) {
     console.error(
-      "Usage: run-extract.mjs <txt|md|html|json> <source-path> [--output-path=DIR] [--output-name=NAME] [--flat] [--include-images]"
+      "Usage: run-extract.mjs <txt|md|html|json|webapp> <source-path> [--output-path=DIR] [--output-name=NAME] [--flat] [--include-images]"
     );
     process.exit(1);
   }

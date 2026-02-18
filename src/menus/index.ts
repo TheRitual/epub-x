@@ -63,6 +63,8 @@ function outputFormatDefaultIndex(f: OutputFormat): number {
       return 2;
     case "html":
       return 3;
+    case "webapp":
+      return 4;
     default:
       return 0;
   }
@@ -79,6 +81,7 @@ export async function promptOutputFormat(
       { name: t("format_md"), value: "md" },
       { name: t("format_json"), value: "json" },
       { name: t("format_html"), value: "html" },
+      { name: t("format_webapp"), value: "webapp" },
     ],
     t("hint_moveSelect"),
     outputFormatDefaultIndex(defaultFormat)

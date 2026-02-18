@@ -172,6 +172,17 @@ function cycleSettingForward(key: SettingKey, settings: AppSettings): void {
     case "json_includeImages":
       f.json.includeImages = !f.json.includeImages;
       break;
+    case "webapp_style": {
+      const i = HTML_STYLE_ORDER.indexOf(f.webapp.style);
+      f.webapp.style = HTML_STYLE_ORDER[(i + 1) % HTML_STYLE_ORDER.length];
+      break;
+    }
+    case "webapp_includeImages":
+      f.webapp.includeImages = !f.webapp.includeImages;
+      break;
+    case "webapp_chapterNewPage":
+      f.webapp.chapterNewPage = !f.webapp.chapterNewPage;
+      break;
     default:
       break;
   }
@@ -273,6 +284,20 @@ function cycleSettingBackward(key: SettingKey, settings: AppSettings): void {
     case "json_includeImages":
       f.json.includeImages = !f.json.includeImages;
       break;
+    case "webapp_style": {
+      const iWa = HTML_STYLE_ORDER.indexOf(f.webapp.style);
+      f.webapp.style =
+        HTML_STYLE_ORDER[
+          (iWa - 1 + HTML_STYLE_ORDER.length) % HTML_STYLE_ORDER.length
+        ];
+      break;
+    }
+    case "webapp_includeImages":
+      f.webapp.includeImages = !f.webapp.includeImages;
+      break;
+    case "webapp_chapterNewPage":
+      f.webapp.chapterNewPage = !f.webapp.chapterNewPage;
+      break;
     default:
       break;
   }
@@ -309,6 +334,9 @@ export function isCycleable(value: string): boolean {
     "html_style",
     "json_splitChapters",
     "json_includeImages",
+    "webapp_style",
+    "webapp_includeImages",
+    "webapp_chapterNewPage",
   ];
   return cycleable.includes(value);
 }
@@ -321,11 +349,16 @@ export type SettingsListAction =
   | { type: "openTheme" }
   | { type: "openManageHtmlStyles" }
   | { type: "openChooseHtmlStyle" }
+  | { type: "openChooseWebappHtmlStyle" }
   | { type: "openAppLanguage" }
   | { type: "openExportLanguage" }
   | { type: "openCustomPrefix" }
   | { type: "restoreDefaults" }
   | { type: "none" };
+
+export type SettingsListResult = SettingsListAction & {
+  selectedIndex?: number;
+};
 
 const SELECTION_MARGIN = 5;
 const SCROLLBAR_THUMB = "\u2588";
@@ -411,17 +444,26 @@ const SAVE_BEFORE_EXIT_CHOICES = [
   { name: "Cancel", value: "cancel" },
 ] as const;
 
+function firstSelectableIndex(rows: SettingsRow[], fromIndex: number): number {
+  let i = Math.max(0, Math.min(fromIndex, rows.length - 1));
+  while (i < rows.length && rows[i]?.disabled) i++;
+  if (i >= rows.length) {
+    i = 0;
+    while (i < rows.length && rows[i]?.disabled) i++;
+  }
+  return i >= rows.length ? 0 : i;
+}
+
 export function promptSettingsList(
   settings: AppSettings,
   getRows: () => SettingsRow[],
-  initialSettings?: AppSettings
-): Promise<SettingsListAction> {
+  initialSettings?: AppSettings,
+  initialIndex?: number
+): Promise<SettingsListResult> {
   return new Promise((resolve) => {
     const pageSize = Math.max(5, getSelectPageSize() - DESCRIPTION_LINES - 2);
     let rows = getRows();
-    let index = 0;
-    while (index < rows.length && rows[index]?.disabled) index++;
-    if (index >= rows.length) index = 0;
+    let index = firstSelectableIndex(rows, initialIndex ?? 0);
 
     const render = (): void => {
       rows = getRows();
@@ -476,7 +518,8 @@ export function promptSettingsList(
             row.value === "__sep2__" ||
             row.value === "__sep3__" ||
             row.value === "__sep4__" ||
-            row.value === "__sep5__";
+            row.value === "__sep5__" ||
+            row.value === "__sep_webapp__";
           rowLines.push(
             formatSettingsRow(
               row,
@@ -606,7 +649,7 @@ export function promptSettingsList(
       if (key?.name === "escape" || ch === "\x1b") {
         if (!initialSettings || settingsEqual(settings, initialSettings)) {
           cleanup();
-          resolve({ type: "cancel" });
+          resolve({ type: "cancel", selectedIndex: index });
           return;
         }
         cleanup();
@@ -617,11 +660,11 @@ export function promptSettingsList(
           0
         ).then((result) => {
           if (result === "save") {
-            resolve({ type: "done" });
+            resolve({ type: "done", selectedIndex: index });
           } else if (result === "discard" || result === null) {
-            resolve({ type: "cancel" });
+            resolve({ type: "cancel", selectedIndex: index });
           } else {
-            promptSettingsList(settings, getRows, initialSettings).then(
+            promptSettingsList(settings, getRows, initialSettings, index).then(
               resolve
             );
           }
@@ -662,7 +705,7 @@ export function promptSettingsList(
       }
       if (key?.name === "r" && !key?.ctrl && !key?.shift) {
         cleanup();
-        resolve({ type: "restoreDefaults" });
+        resolve({ type: "restoreDefaults", selectedIndex: index });
         return;
       }
       const row = rows[index];
@@ -680,47 +723,52 @@ export function promptSettingsList(
       if (key?.name === "return" || key?.name === "enter") {
         if (row.value === "__done__") {
           cleanup();
-          resolve({ type: "done" });
+          resolve({ type: "done", selectedIndex: index });
           return;
         }
         if (row.value === "outputPath") {
           cleanup();
-          resolve({ type: "openOutputPath" });
+          resolve({ type: "openOutputPath", selectedIndex: index });
           return;
         }
         if (row.value === "defaultFormats") {
           cleanup();
-          resolve({ type: "openDefaultFormats" });
+          resolve({ type: "openDefaultFormats", selectedIndex: index });
           return;
         }
         if (row.value === "theme") {
           cleanup();
-          resolve({ type: "openTheme" });
+          resolve({ type: "openTheme", selectedIndex: index });
           return;
         }
         if (row.value === "app_language") {
           cleanup();
-          resolve({ type: "openAppLanguage" });
+          resolve({ type: "openAppLanguage", selectedIndex: index });
           return;
         }
         if (row.value === "export_language") {
           cleanup();
-          resolve({ type: "openExportLanguage" });
+          resolve({ type: "openExportLanguage", selectedIndex: index });
           return;
         }
         if (row.value === "html_styles") {
           cleanup();
-          resolve({ type: "openManageHtmlStyles" });
+          resolve({ type: "openManageHtmlStyles", selectedIndex: index });
           return;
         }
         if (row.value === "html_style_theme") {
           cleanup();
-          resolve({ type: "openChooseHtmlStyle" });
+          resolve({ type: "openChooseHtmlStyle", selectedIndex: index });
+          return;
+        }
+        if (row.value === "webapp_style_theme") {
+          cleanup();
+          resolve({ type: "openChooseWebappHtmlStyle", selectedIndex: index });
           return;
         }
         if (row.value === "chapterFileNameCustomPrefix") {
           cleanup();
-          resolve({ type: "openCustomPrefix" });
+          resolve({ type: "openCustomPrefix", selectedIndex: index });
           return;
         }
         if (!row.disabled) cycleCurrent(true);

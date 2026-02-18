@@ -22,7 +22,8 @@
     "eXepub2txt": "node scripts/run-extract.mjs txt",
     "eXepub2md": "node scripts/run-extract.mjs md",
     "eXepub2html": "node scripts/run-extract.mjs html",
-    "eXepub2json": "node scripts/run-extract.mjs json"
+    "eXepub2json": "node scripts/run-extract.mjs json",
+    "eXepub2webapp": "node scripts/run-extract.mjs webapp"
   },
   "license": "MIT",
   "engines": {

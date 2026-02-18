@@ -29,6 +29,13 @@ export interface JsonFormatOptions {
   includeImages: boolean;
 }
 
+export interface WebAppFormatOptions {
+  style: HtmlStyle;
+  htmlStyleId: string;
+  includeImages: boolean;
+  chapterNewPage: boolean;
+}
+
 export interface AppSettings {
   outputPath: string;
   defaultFormats: OutputFormat[];
@@ -46,6 +53,7 @@ export interface AppSettings {
     md: MdFormatOptions;
     html: HtmlFormatOptions;
     json: JsonFormatOptions;
+    webapp: WebAppFormatOptions;
   };
 }
 
@@ -82,6 +90,13 @@ const DEFAULT_JSON_FORMAT: JsonFormatOptions = {
   includeImages: false,
 };
 
+const DEFAULT_WEBAPP_FORMAT: WebAppFormatOptions = {
+  style: "styled",
+  htmlStyleId: "default",
+  includeImages: true,
+  chapterNewPage: true,
+};
+
 export const DEFAULT_SETTINGS: AppSettings = {
   outputPath: "",
   defaultFormats: ["txt"],
@@ -99,5 +114,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
     md: { ...DEFAULT_MD_FORMAT },
     html: { ...DEFAULT_HTML_FORMAT },
     json: { ...DEFAULT_JSON_FORMAT },
+    webapp: { ...DEFAULT_WEBAPP_FORMAT },
   },
 };

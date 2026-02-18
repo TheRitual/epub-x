@@ -22,9 +22,10 @@ const FORMAT_OPTIONS: { value: OutputFormat; name: string }[] = [
   { value: "md", name: "Markdown (.md)" },
   { value: "json", name: "JSON (.json)" },
   { value: "html", name: "HTML (.html)" },
+  { value: "webapp", name: "Web app (.html)" },
 ];
 
-const ORDER: OutputFormat[] = ["txt", "md", "json", "html"];
+const ORDER: OutputFormat[] = ["txt", "md", "json", "html", "webapp"];
 
 export function promptOutputFormatsMulti(
   defaultFormats: OutputFormat[]

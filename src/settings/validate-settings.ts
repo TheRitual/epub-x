@@ -11,7 +11,13 @@ import type {
 } from "../converter/types.js";
 import { SUPPORTED_LOCALES } from "../i18n/types.js";
 
-const VALID_OUTPUT_FORMATS: OutputFormat[] = ["txt", "md", "json", "html"];
+const VALID_OUTPUT_FORMATS: OutputFormat[] = [
+  "txt",
+  "md",
+  "json",
+  "html",
+  "webapp",
+];
 const VALID_CHAPTER_TITLE_STYLE: ChapterTitleStyleTxt[] = [
   "separated",
   "inline",
@@ -133,6 +139,7 @@ export function validateAndNormalizeSettings(
       md: { ...def.formats.md },
       html: { ...def.formats.html },
       json: { ...def.formats.json },
+      webapp: { ...def.formats.webapp },
     },
   };
 
@@ -452,6 +459,41 @@ export function validateAndNormalizeSettings(
           key: "formats.json.includeImages",
           reason: "Must be a boolean",
           defaultValue: String(def.formats.json.includeImages),
+        });
+    }
+
+    if (fm.webapp && typeof fm.webapp === "object") {
+      if (VALID_HTML_STYLE.includes(fm.webapp.style as HtmlStyle))
+        result.formats.webapp.style = fm.webapp.style as HtmlStyle;
+      else if (fm.webapp.style !== undefined)
+        corrections.push({
+          key: "formats.webapp.style",
+          reason: `Must be one of: ${VALID_HTML_STYLE.join(", ")}`,
+          defaultValue: def.formats.webapp.style,
+        });
+      if (isString(fm.webapp.htmlStyleId) && fm.webapp.htmlStyleId.trim())
+        result.formats.webapp.htmlStyleId = fm.webapp.htmlStyleId.trim();
+      else if (fm.webapp.htmlStyleId !== undefined)
+        corrections.push({
+          key: "formats.webapp.htmlStyleId",
+          reason: "Must be a non-empty string",
+          defaultValue: JSON.stringify(def.formats.webapp.htmlStyleId),
+        });
+      if (isBoolean(fm.webapp.includeImages))
+        result.formats.webapp.includeImages = fm.webapp.includeImages;
+      else if (fm.webapp.includeImages !== undefined)
+        corrections.push({
+          key: "formats.webapp.includeImages",
+          reason: "Must be a boolean",
+          defaultValue: String(def.formats.webapp.includeImages),
+        });
+      if (isBoolean(fm.webapp.chapterNewPage))
+        result.formats.webapp.chapterNewPage = fm.webapp.chapterNewPage;
+      else if (fm.webapp.chapterNewPage !== undefined)
+        corrections.push({
+          key: "formats.webapp.chapterNewPage",
+          reason: "Must be a boolean",
+          defaultValue: String(def.formats.webapp.chapterNewPage),
         });
     }
   } else if (

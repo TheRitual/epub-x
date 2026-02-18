@@ -32,8 +32,13 @@ import {
 import {
   buildStyledHtmlDocument,
   buildMinimalHtmlDocument,
+  buildCssFromStyle,
 } from "./utils/html-document.js";
 import { loadHtmlStyle } from "../html-styles/index.js";
+import {
+  buildWebAppHtml,
+  WEBAPP_READER_LAYOUT_CSS,
+} from "./webapp/build-html.js";
 import { getExportT } from "../i18n/index.js";
 import type { LocaleId } from "../i18n/types.js";
 
@@ -453,6 +458,147 @@ export async function convertEpub(
         "utf-8"
       );
     }
+    return {
+      outputPath: mainFilePath,
+      outputDir: bookDir,
+      totalChapters: chapters.length,
+    };
+  }
+
+  if (format === "webapp") {
+    const metadata = buildJsonMetadata(epub);
+    const chapterIds: string[] = [];
+    const chapters: EpubExportChapter[] = [];
+    const imagesMap = new Map<string, EpubExportImage>();
+    const manifestIdToImgId = new Map<string, string>();
+    interface FlowItem {
+      id?: string;
+      href?: string;
+      title?: string;
+    }
+    interface ManifestItem {
+      href?: string;
+      "media-type"?: string;
+      mediaType?: string;
+    }
+    let hrefToIdWa: Map<string, string> | null = null;
+    let imgDirWa: string | null = null;
+    if (options.includeImages) {
+      imgDirWa = path.join(bookDir, IMG_SUBDIR);
+      fs.mkdirSync(imgDirWa, { recursive: true });
+      hrefToIdWa = new Map<string, string>();
+      for (const [id, item] of Object.entries(epub.manifest) as [
+        string,
+        ManifestItem,
+      ][]) {
+        const href = item?.href;
+        const mt = item?.["media-type"] ?? item?.mediaType;
+        if (href && isImageManifestItem(href, mt)) {
+          const norm = path.normalize(href).replace(/\\/g, "/");
+          hrefToIdWa.set(norm, id);
+          const withoutFirst = pathWithoutFirstSegment(norm);
+          if (withoutFirst !== norm) hrefToIdWa.set(withoutFirst, id);
+        }
+      }
+    }
+    let waDisplayIdx = 0;
+    for (const i of indicesToProcess) {
+      const chapter = flow[i] as FlowItem | undefined;
+      const id = chapter?.id;
+      if (!id) continue;
+      const chapterId = `chap_${crypto.randomUUID()}`;
+      chapterIds.push(chapterId);
+      const raw = await epub.getChapterRawAsync(id);
+      let bodyHtml = extractBodyInnerHtml(raw);
+      bodyHtml = decodeHtmlEntities(bodyHtml);
+      if (!options.includeImages) {
+        bodyHtml = bodyHtml.replace(/<img[^>]*>/gi, "");
+      } else if (hrefToIdWa && imgDirWa) {
+        const chapterHref = chapter?.href ?? "";
+        const imgTagRe = /<img[^>]+src\s*=\s*["']([^"']+)["'][^>]*>/gi;
+        const matches: { full: string; src: string; index: number }[] = [];
+        let m: RegExpExecArray | null;
+        while ((m = imgTagRe.exec(bodyHtml)) !== null) {
+          matches.push({ full: m[0]!, src: m[1]!, index: m.index });
+        }
+        for (let k = matches.length - 1; k >= 0; k--) {
+          const { full, src } = matches[k]!;
+          const resolved = resolveChapterRelative(chapterHref, src);
+          const manifestId = hrefToIdWa
+            ? manifestIdForImage(resolved, hrefToIdWa)
+            : undefined;
+          if (!manifestId) continue;
+          let imgId = manifestIdToImgId.get(manifestId);
+          if (!imgId) {
+            imgId = `img_${crypto.randomUUID()}`;
+            manifestIdToImgId.set(manifestId, imgId);
+            try {
+              const [buf, mime] = await epub.getImageAsync(manifestId);
+              const extImg = mime?.startsWith("image/")
+                ? (mime.split("/")[1] ?? "png")
+                : "png";
+              const safeName = `${manifestId.replace(/[^a-zA-Z0-9_-]/g, "_")}.${extImg}`;
+              const outPath = path.join(imgDirWa, safeName);
+              fs.writeFileSync(outPath, buf);
+              imagesMap.set(imgId, { url: `${IMG_SUBDIR}/${safeName}` });
+            } catch {
+              continue;
+            }
+          }
+          bodyHtml =
+            bodyHtml.slice(0, matches[k]!.index) +
+            `\${{${imgId}}}` +
+            bodyHtml.slice(matches[k]!.index + full.length);
+        }
+      }
+      const chapterNum = chapters.length + 1;
+      const chapterTitle = chapter?.title?.trim() ?? "";
+      const title = chapterTitle || exportT.formatChapter(chapterNum);
+      if (options.addChapterTitles) {
+        bodyHtml =
+          `<h3>${exportT.formatChapter(chapterNum, chapterTitle)}</h3>\n\n` +
+          bodyHtml;
+      }
+      chapters.push({
+        id: chapterId,
+        index: chapterNum,
+        title,
+        content: bodyHtml,
+      });
+      waDisplayIdx++;
+      process.stdout.write(`\rConverting chapter ${waDisplayIdx}/${total}...`);
+    }
+    process.stdout.write("\n");
+    const toc = buildJsonToc(epub, chapterIds, indicesToProcess, flow);
+    const bookData: EpubExportJson = {
+      version: "1.0",
+      metadata,
+      toc,
+      chapters,
+      ...(options.includeImages && imagesMap.size > 0
+        ? { images: Object.fromEntries(imagesMap) }
+        : {}),
+    };
+    let contentCss = WEBAPP_READER_LAYOUT_CSS;
+    const style = options.htmlStyle ?? "none";
+    if (style !== "none") {
+      const styleDef = loadHtmlStyle(options.htmlStyleId ?? "default");
+      if (styleDef) {
+        let styleCss = buildCssFromStyle(styleDef);
+        styleCss = styleCss.replace(/\.epub-x-body\b/g, ".reader-content");
+        contentCss = styleCss + contentCss;
+      }
+    }
+    const html = buildWebAppHtml(
+      bookData,
+      {
+        initialLocale: (options.exportLocale ?? "en") as string,
+        chapterNewPage: options.chapterNewPage ?? true,
+      },
+      contentCss
+    );
+    const mainFilePath = path.join(bookDir, safeBasename + ".html");
+    fs.writeFileSync(mainFilePath, html, "utf-8");
     return {
       outputPath: mainFilePath,
       outputDir: bookDir,

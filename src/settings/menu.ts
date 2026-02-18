@@ -70,6 +70,10 @@ export type SettingKey =
   | "html_styles"
   | "json_splitChapters"
   | "json_includeImages"
+  | "webapp_style"
+  | "webapp_style_theme"
+  | "webapp_includeImages"
+  | "webapp_chapterNewPage"
   | "app_language"
   | "export_language";
 
@@ -89,6 +93,15 @@ function getThemeLabel(settings: AppSettings): string {
 
 function getHtmlStyleLabel(settings: AppSettings): string {
   const id = settings.formats.html.htmlStyleId ?? BUILT_IN_HTML_STYLE_ID;
+  if (isBuiltInHtmlStyleId(id)) {
+    return getBuiltInHtmlStyle(id).name;
+  }
+  const custom = loadHtmlStyle(id);
+  return custom?.name ?? id;
+}
+
+function getWebappHtmlStyleLabel(settings: AppSettings): string {
+  const id = settings.formats.webapp.htmlStyleId ?? BUILT_IN_HTML_STYLE_ID;
   if (isBuiltInHtmlStyleId(id)) {
     return getBuiltInHtmlStyle(id).name;
   }
@@ -137,6 +150,10 @@ function formatLabel(s: AppSettings): Record<SettingKey, string> {
     html_style_theme: `HTML style theme: ${getHtmlStyleLabel(s)}`,
     json_splitChapters: `Split chapters: ${f.json.splitChapters ? "Yes" : "No"}`,
     json_includeImages: `Include images: ${f.json.includeImages ? "Yes" : "No"}`,
+    webapp_style: `HTML style: ${formatHtmlStyleLabel(f.webapp.style)}`,
+    webapp_style_theme: `HTML style theme: ${getWebappHtmlStyleLabel(s)}`,
+    webapp_includeImages: `Include images: ${f.webapp.includeImages ? "Yes" : "No"}`,
+    webapp_chapterNewPage: `Chapter on new page: ${f.webapp.chapterNewPage ? "Yes" : "No"}`,
   };
 }
 
@@ -206,6 +223,16 @@ export function getSettingDescription(
       return "On: images are extracted to files. Off: images are skipped.";
     case "json_includeImages":
       return "On: images are extracted to files; main JSON has an image index and ${{img_id}} placeholders. Off: no images in JSON.";
+    case "webapp_style":
+      return settings.formats.webapp.style === "none"
+        ? "Pure HTML: no CSS in the web app content area."
+        : "Styled: apply the selected HTML style to the web app reader content.";
+    case "webapp_style_theme":
+      return "Choose which HTML style to use for the web app reader content.";
+    case "webapp_includeImages":
+      return "On: images are extracted and shown in the web app. Off: images are skipped.";
+    case "webapp_chapterNewPage":
+      return "On: in two-page and paged views, each chapter starts on a new page/spread. Off: chapters flow continuously.";
     case "html_style":
       return settings.formats.html.style === "none"
         ? "Pure HTML: no CSS; raw HTML only. Fast and minimal."
@@ -234,6 +261,8 @@ export function getSettingDescription(
       return "Options that apply only when extracting to HTML.";
     case "__sep5__":
       return "Options that apply only when extracting to JSON.";
+    case "__sep_webapp__":
+      return "Options that apply only when extracting to the web app.";
     default:
       return "";
   }
@@ -265,10 +294,10 @@ export function buildChoices(
     { name: labels.emDashToHyphen, value: "emDashToHyphen" },
     { name: labels.sanitizeWhitespace, value: "sanitizeWhitespace" },
     { name: labels.newlinesHandling, value: "newlinesHandling" },
-    { name: "——— TXT output only ———", value: "__sep2__", disabled: true },
+    { name: t("sep_txt"), value: "__sep2__", disabled: true },
     { name: labels.addChapterTitles, value: "addChapterTitles" },
     { name: labels.chapterTitleStyleTxt, value: "chapterTitleStyleTxt" },
-    { name: "——— MD output only ———", value: "__sep3__", disabled: true },
+    { name: t("sep_md"), value: "__sep3__", disabled: true },
     { name: labels.md_splitChapters, value: "md_splitChapters" },
     { name: labels.md_keepToc, value: "md_keepToc" },
     { name: labels.md_includeImages, value: "md_includeImages" },
@@ -283,7 +312,7 @@ export function buildChoices(
           { name: labels.md_addPrevLink, value: "md_addPrevLink" },
         ]
       : []),
-    { name: "——— HTML output only ———", value: "__sep4__", disabled: true },
+    { name: t("sep_html"), value: "__sep4__", disabled: true },
     { name: labels.html_splitChapters, value: "html_splitChapters" },
     { name: labels.html_keepToc, value: "html_keepToc" },
     { name: labels.html_includeImages, value: "html_includeImages" },
@@ -302,9 +331,16 @@ export function buildChoices(
     ...(f.html.style === "styled"
       ? [{ name: labels.html_style_theme, value: "html_style_theme" }]
       : []),
-    { name: "——— JSON output only ———", value: "__sep5__", disabled: true },
+    { name: t("sep_json"), value: "__sep5__", disabled: true },
     { name: labels.json_splitChapters, value: "json_splitChapters" },
     { name: labels.json_includeImages, value: "json_includeImages" },
+    { name: t("sep_webapp"), value: "__sep_webapp__", disabled: true },
+    { name: labels.webapp_style, value: "webapp_style" },
+    ...(f.webapp.style === "styled"
+      ? [{ name: labels.webapp_style_theme, value: "webapp_style_theme" }]
+      : []),
+    { name: labels.webapp_includeImages, value: "webapp_includeImages" },
+    { name: labels.webapp_chapterNewPage, value: "webapp_chapterNewPage" },
     { name: t("done"), value: "__done__" },
   ];
 }
@@ -318,16 +354,22 @@ export async function promptSettingsMenu(
       md: { ...currentSettings.formats.md },
       html: { ...currentSettings.formats.html },
       json: { ...currentSettings.formats.json },
+      webapp: { ...currentSettings.formats.webapp },
     },
   };
 
+  let selectedIndex: number | undefined = undefined;
   for (;;) {
     clearScreen();
-    const action = await promptSettingsList(
+    const result = await promptSettingsList(
       settings,
       () => buildChoices(settings),
-      currentSettings
+      currentSettings,
+      selectedIndex
     );
+    if (result.selectedIndex !== undefined)
+      selectedIndex = result.selectedIndex;
+    const action = result;
 
     if (action.type === "cancel") return null;
     if (action.type === "done") return settings;
@@ -338,6 +380,7 @@ export async function promptSettingsMenu(
           md: { ...DEFAULT_SETTINGS.formats.md },
           html: { ...DEFAULT_SETTINGS.formats.html },
           json: { ...DEFAULT_SETTINGS.formats.json },
+          webapp: { ...DEFAULT_SETTINGS.formats.webapp },
         },
       });
       setCurrentTheme(resolveTheme(settings.cliThemeId));
@@ -396,6 +439,13 @@ export async function promptSettingsMenu(
         settings.formats.html.htmlStyleId ?? BUILT_IN_HTML_STYLE_ID
       );
       if (id !== null) settings.formats.html.htmlStyleId = id;
+      continue;
+    }
+    if (action.type === "openChooseWebappHtmlStyle") {
+      const id = await promptChooseHtmlStyle(
+        settings.formats.webapp.htmlStyleId ?? BUILT_IN_HTML_STYLE_ID
+      );
+      if (id !== null) settings.formats.webapp.htmlStyleId = id;
       continue;
     }
     if (action.type === "openCustomPrefix") {
